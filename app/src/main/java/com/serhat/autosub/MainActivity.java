@@ -60,23 +60,16 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
     private Uri currentVideoUri;
     private ActionMode actionMode;
     private MenuItem select_video_menu;
-    private Uri currentSubtitleUri;
     private boolean preparedOnce;
-    private String languageCode;
+    private String code;
     ResultLauncher resultLauncher = new ResultLauncher(null,this){
 
         @Override
         public void onLauncherResult(@NonNull Intent result) {
             try {
-                boolean fromAuto = result.getBooleanExtra("from_auto",false);
-                if(!fromAuto){
-                    languageCode = result.getStringExtra("selected_lang_code");
-                }
-                else{
-                    String code = result.getStringExtra("selected_lang_code");
-                    if(!TextUtils.isEmpty(code)){
-                        loadModel(code);
-                    }
+                code = result.getStringExtra("selected_lang_code");
+                if(!TextUtils.isEmpty(code)){
+                    loadModel(code);
                 }
             }catch (Exception ignored){
             }
@@ -99,19 +92,6 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     generateSubtitles(uri);
                 } else {
                     Log.d("PhotoPicker", "No media selected");
-                }
-            });
-
-
-
-    ActivityResultLauncher<String[]> pickSubtitle =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri != null) {
-                    Log.d("SubtitlePicker", "Selected SRT URI: " + uri);
-                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    currentSubtitleUri = uri;
-                } else {
-                    Log.d("SubtitlePicker", "No subtitle selected");
                 }
             });
 
@@ -140,106 +120,9 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                 .build());
     }
 
-    private final ActivityResultLauncher<Intent> openFileLauncher =  registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-
-                if (result.getResultCode() == Activity.RESULT_OK) {
-
-                    String filename = Objects.requireNonNull(result.getData()).getStringExtra("srt_file");
-
-                    binding.toolbar.setSubtitle(filename);
-
-                    //Uri subtitleUri = Uri.parse(filename);
-
-                    try{
-                        if(player.isPlaying()){
-                            player.stop();
-                        }
-                        player.release();
-                    }
-                    catch (Throwable ignored){
-                        Log.d("auto_sub_tag", ": "+ignored);
-                    }
-
-                    Log.d("auto_sub_tag", ": "+filename);
-                    Uri subtitleUri = Uri.fromFile(new File(filename));
-
-                    // 🔹 Subtitle configuration
-                    MediaItem.SubtitleConfiguration subtitle = new MediaItem.SubtitleConfiguration.Builder(subtitleUri)
-                            .setMimeType(MimeTypes.APPLICATION_SUBRIP) // For .srt
-                            .setLanguage("hi") // optional
-                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                            .build();
-
-                    // 🔹 Combine video + subtitle
-                    MediaItem mediaItem = new MediaItem.Builder()
-                            .setUri(currentVideoUri)
-                            .setSubtitleConfigurations(Collections.singletonList(subtitle))
-                            .build();
-
-                   /* ArrayList<MediaItem.SubtitleConfiguration> arrayList = new ArrayList<>();
-                    arrayList.add(subtitle);*/
-                    binding.statusTV.setVisibility(View.GONE);
-                    player = new ExoPlayer.Builder(this).build();
-                    PlayerView playerView = binding.playerView2;
-                    playerView.setPlayer(player);
-                    binding.playerView2.setVisibility(View.VISIBLE);
-                    binding.playerView.setVisibility(View.GONE);
-                    binding.autoSubtitleLanguage.setVisibility(View.GONE);
-                    binding.editSubtitleBT.setVisibility(View.GONE);
-                    player.setMediaItem(mediaItem);
-                    player.prepare();
-                    player.play();
-
-                } else {
-
-                    Log.d("@Arun", "User canceled or closed viewer");
-
-                }
-            }
-    );
 
 
 
-    private void translateSubtitle(){
-
-
-
-        binding.translateSubtitleBT.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                if(currentVideoUri == null){
-                    Toast.makeText(MainActivity.this, "select video first", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                String autoSubtitleGenerator = binding.editSubtitleBT.getText().toString();
-
-                 if (TextUtils.isEmpty(languageCode)){
-                     Toast.makeText(MainActivity.this, "No Language selected", Toast.LENGTH_SHORT).show();
-                     return;
-                 }
-
-                if (TextUtils.isEmpty(autoSubtitleGenerator)){
-
-                    Toast.makeText(MainActivity.this, "No enter title", Toast.LENGTH_SHORT).show();
-
-                    return;
-                }
-
-                if (currentSubtitleUri!=null) {
-                    Intent intent = new Intent("TranslationBridgeActivity");
-                    intent.setData(currentSubtitleUri);
-                    intent.putExtra("title", autoSubtitleGenerator);
-                    intent.putExtra("lan_code", languageCode);
-                    openFileLauncher.launch(intent);
-                }else {
-                    Toast.makeText(MainActivity.this, "No subtitle selected", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -248,8 +131,6 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         setContentView(binding.getRoot());
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        translateSubtitle();
 
         player = new ExoPlayer.Builder(this).build();
         PlayerView playerView = binding.playerView;
@@ -278,12 +159,13 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         binding.recyclerView.setAdapter(subtitleAdapter);
 
         binding.selectVideoBT.setOnClickListener(v -> {
+            if(TextUtils.isEmpty(code)){
+                Toast.makeText(this, "Select Language First", Toast.LENGTH_SHORT).show();
+                return;
+            }
             selectVideo();
         });
 
-        binding.selectSubtitleBT.setOnClickListener(v -> {
-            pickSubtitle.launch(new String[]{"application/x-subrip", "text/plain"});
-        });
 
         binding.autoSubtitleLanguage.setOnClickListener(v -> {
             resultLauncher.launchByLauncher(new Intent(MainActivity.this, LanguagePickerActivity.class));

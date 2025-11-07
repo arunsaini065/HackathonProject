@@ -18,15 +18,26 @@
         android:supportsRtl="true"
         android:name=".App"
         android:theme="@style/Theme.AutoSub">
+
+        <activity android:name="LandingActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+
         <activity
             android:name=".MainActivity"
             android:screenOrientation="sensorPortrait"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        </activity>
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+        <activity
+            android:name=".TranslatorActivity"
+            android:screenOrientation="sensorPortrait"
+            android:exported="true">
         </activity>
 
         <activity android:name=".LanguagePickerActivity"/>
