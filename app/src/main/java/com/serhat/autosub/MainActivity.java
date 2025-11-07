@@ -134,14 +134,18 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
     private void translateSubtitle(){
 
+        String code = "en";
+        String autoSubtitleGenerator = "AutoSubtitleGenerator";
+
         binding.translateSubtitleBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 if (currentSubtitleUri!=null) {
                     Intent intent = new Intent("TranslationBridgeActivity");
                     intent.setData(currentSubtitleUri);
-                    intent.putExtra("title", "AutoSubtitleGenerator");
-                    intent.putExtra("lan_code", "en");
+                    intent.putExtra("title", autoSubtitleGenerator);
+                    intent.putExtra("lan_code", code);
                     openFileLauncher.launch(intent);
                 }else {
                     Toast.makeText(MainActivity.this, "No subtitle selected", Toast.LENGTH_SHORT).show();
