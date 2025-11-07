@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml:2:13-83
+INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml:2:13-83
+	package
+		INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml
+	xmlns:android
+		ADDED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml:2:23-81
+uses-sdk
+INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml reason: use-sdk injection requested
+INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml
+INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml
+	android:targetSdkVersion
+		INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml
+	android:minSdkVersion
+		INJECTED from /Users/rareprob/AndroidStudioProjects/auto-subtitle-generator/models/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest7869929879010105393.xml
