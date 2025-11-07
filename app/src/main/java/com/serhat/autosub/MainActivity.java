@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -47,6 +48,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements ActionMode.Callback {
@@ -120,7 +122,9 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
                 if (result.getResultCode() == Activity.RESULT_OK) {
 
-                    Log.d("@Arun", "User opened/viewed successfully"+ result.getData().getStringExtra("srt_file"));
+                    String filename = Objects.requireNonNull(result.getData()).getStringExtra("srt_file");
+
+                    binding.toolbar.setSubtitle(filename);
 
                 } else {
 
@@ -134,12 +138,27 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
     private void translateSubtitle(){
 
-        String code = "en";
-        String autoSubtitleGenerator = "AutoSubtitleGenerator";
+
 
         binding.translateSubtitleBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                String code = binding.code.getText().toString();
+
+                String autoSubtitleGenerator = binding.editSubtitleBT.getText().toString();
+
+                 if (TextUtils.isEmpty(code)){
+                     Toast.makeText(MainActivity.this, "No Language selected", Toast.LENGTH_SHORT).show();
+                     return;
+                 }
+
+                if (TextUtils.isEmpty(autoSubtitleGenerator)){
+
+                    Toast.makeText(MainActivity.this, "No enter title", Toast.LENGTH_SHORT).show();
+
+                    return;
+                }
 
                 if (currentSubtitleUri!=null) {
                     Intent intent = new Intent("TranslationBridgeActivity");
