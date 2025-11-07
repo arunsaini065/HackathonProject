@@ -25,14 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import android.os.Environment;
 import java.io.BufferedReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.io.InputStreamReader;
-import java.util.Map;
-import java.util.HashMap;
 import java.io.InputStream;
 import java.util.Collections;
 
@@ -57,9 +54,16 @@ public class SubtitleGenerator {
         void onError(String errorMessage);
     }
 
-    public void initModel(ModelInitCallback callback) {
+    public void initModel(ModelInitCallback callback, String code) {
         Log.d(TAG,"Called Model Init");
-        StorageService.unpack(context, "model-hi-in", "model",
+        String modelName = "model-hi-in";
+        if(code == "hi"){
+            modelName  = "model-hi-in";
+            }
+        else{
+            modelName = "model-en-us";
+        }
+        StorageService.unpack(context, modelName, "model",
                 (model) -> {
                     this.model = model;
                     Log.d(TAG, "Model initialized");

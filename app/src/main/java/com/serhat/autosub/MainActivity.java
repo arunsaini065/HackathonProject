@@ -21,7 +21,6 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.widget.EditText;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
@@ -31,6 +30,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.view.ActionMode;
 import androidx.core.app.ActivityCompat;
+import androidx.media3.common.C;
+import androidx.media3.common.MimeTypes;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,9 +43,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.serhat.autosub.databinding.ActivityMainBinding;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +62,26 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
     private MenuItem select_video_menu;
     private Uri currentSubtitleUri;
     private boolean preparedOnce;
+    private String languageCode;
+    ResultLauncher resultLauncher = new ResultLauncher(null,this){
+
+        @Override
+        public void onLauncherResult(@NonNull Intent result) {
+            try {
+                boolean fromAuto = result.getBooleanExtra("from_auto",false);
+                if(!fromAuto){
+                    languageCode = result.getStringExtra("selected_lang_code");
+                }
+                else{
+                    String code = result.getStringExtra("selected_lang_code");
+                    if(!TextUtils.isEmpty(code)){
+                        loadModel(code);
+                    }
+                }
+            }catch (Exception ignored){
+            }
+        }
+    };
 
     private enum Operation {SUBTITLE, VIDEO, NONE}
 
@@ -76,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     if (select_video_menu != null) {
                         select_video_menu.setVisible(true);
                     }
+                    currentVideoUri = uri;
                     generateSubtitles(uri);
                 } else {
                     Log.d("PhotoPicker", "No media selected");
@@ -94,6 +114,10 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     Log.d("SubtitlePicker", "No subtitle selected");
                 }
             });
+
+
+
+
 
     private static final long UPDATE_INTERVAL = 100;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -126,6 +150,48 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
                     binding.toolbar.setSubtitle(filename);
 
+                    //Uri subtitleUri = Uri.parse(filename);
+
+                    try{
+                        if(player.isPlaying()){
+                            player.stop();
+                        }
+                        player.release();
+                    }
+                    catch (Throwable ignored){
+                        Log.d("auto_sub_tag", ": "+ignored);
+                    }
+
+                    Log.d("auto_sub_tag", ": "+filename);
+                    Uri subtitleUri = Uri.fromFile(new File(filename));
+
+                    // 🔹 Subtitle configuration
+                    MediaItem.SubtitleConfiguration subtitle = new MediaItem.SubtitleConfiguration.Builder(subtitleUri)
+                            .setMimeType(MimeTypes.APPLICATION_SUBRIP) // For .srt
+                            .setLanguage("hi") // optional
+                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                            .build();
+
+                    // 🔹 Combine video + subtitle
+                    MediaItem mediaItem = new MediaItem.Builder()
+                            .setUri(currentVideoUri)
+                            .setSubtitleConfigurations(Collections.singletonList(subtitle))
+                            .build();
+
+                   /* ArrayList<MediaItem.SubtitleConfiguration> arrayList = new ArrayList<>();
+                    arrayList.add(subtitle);*/
+                    binding.statusTV.setVisibility(View.GONE);
+                    player = new ExoPlayer.Builder(this).build();
+                    PlayerView playerView = binding.playerView2;
+                    playerView.setPlayer(player);
+                    binding.playerView2.setVisibility(View.VISIBLE);
+                    binding.playerView.setVisibility(View.GONE);
+                    binding.autoSubtitleLanguage.setVisibility(View.GONE);
+                    binding.editSubtitleBT.setVisibility(View.GONE);
+                    player.setMediaItem(mediaItem);
+                    player.prepare();
+                    player.play();
+
                 } else {
 
                     Log.d("@Arun", "User canceled or closed viewer");
@@ -144,11 +210,13 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
             @Override
             public void onClick(View view) {
 
-                String code = binding.code.getText().toString();
-
+                if(currentVideoUri == null){
+                    Toast.makeText(MainActivity.this, "select video first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 String autoSubtitleGenerator = binding.editSubtitleBT.getText().toString();
 
-                 if (TextUtils.isEmpty(code)){
+                 if (TextUtils.isEmpty(languageCode)){
                      Toast.makeText(MainActivity.this, "No Language selected", Toast.LENGTH_SHORT).show();
                      return;
                  }
@@ -164,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     Intent intent = new Intent("TranslationBridgeActivity");
                     intent.setData(currentSubtitleUri);
                     intent.putExtra("title", autoSubtitleGenerator);
-                    intent.putExtra("lan_code", code);
+                    intent.putExtra("lan_code", languageCode);
                     openFileLauncher.launch(intent);
                 }else {
                     Toast.makeText(MainActivity.this, "No subtitle selected", Toast.LENGTH_SHORT).show();
@@ -187,31 +255,17 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         PlayerView playerView = binding.playerView;
         playerView.setPlayer(player);
 
-        binding.selectVideoBT.setEnabled(false);
 
-        subtitleGenerator = new SubtitleGenerator(this);
-        binding.selectVideoBT.setText("Loading Model...");
-        subtitleGenerator.initModel(new SubtitleGenerator.ModelInitCallback() {
+        binding.genSubtitleLanguage.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onModelInitialized() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        binding.selectVideoBT.setText("Select Video");
-                        binding.selectVideoBT.setEnabled(true);
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                runOnUiThread(() -> {
-                    binding.selectVideoBT.setEnabled(false);
-                    Log.d("auto_sub_tag", "onError: "+errorMessage);
-                    Toast.makeText(MainActivity.this, "Error initializing model: " + errorMessage, Toast.LENGTH_LONG).show();
-                });
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,LanguagePickerActivity.class);
+                intent.putExtra("from_auto",true);
+                resultLauncher.launchByLauncher(intent);
             }
         });
+        //binding.selectVideoBT.setEnabled(false);
+
 
         subtitleAdapter = new SubtitleAdapter();
         subtitleAdapter.setOnSubtitleClickListener(this::showEditSubtitleDialog);
@@ -229,6 +283,10 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
         binding.selectSubtitleBT.setOnClickListener(v -> {
             pickSubtitle.launch(new String[]{"application/x-subrip", "text/plain"});
+        });
+
+        binding.autoSubtitleLanguage.setOnClickListener(v -> {
+            resultLauncher.launchByLauncher(new Intent(MainActivity.this, LanguagePickerActivity.class));
         });
 
 
@@ -288,6 +346,35 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         });
 
 
+    }
+
+    private void loadModel(String code) {
+        binding.selectVideoBT.setEnabled(false);
+        binding.selectVideoBT.setVisibility(View.VISIBLE);
+        binding.genSubtitleLanguage.setVisibility(View.GONE);
+        binding.selectVideoBT.setText("Loading Model...");
+        subtitleGenerator = new SubtitleGenerator(this);
+        subtitleGenerator.initModel(new SubtitleGenerator.ModelInitCallback() {
+            @Override
+            public void onModelInitialized() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        binding.selectVideoBT.setText("Select Video");
+                        binding.selectVideoBT.setEnabled(true);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> {
+                    binding.selectVideoBT.setEnabled(false);
+                    Log.d("auto_sub_tag", "onError: "+errorMessage);
+                    Toast.makeText(MainActivity.this, "Error initializing model: " + errorMessage, Toast.LENGTH_LONG).show();
+                });
+            }
+        },code);
     }
 
     private void generateSubtitles(Uri videoUri) {

@@ -33,4 +33,10 @@ object Languages {
         Language("ja","Japanese","日本語"),
         Language("ko","Korean","한국어")
     )
+
+    val autoOnly = listOf(
+
+        Language("en","English","English"),
+        Language("hi","Hindi","हिन्दी")
+    )
 }

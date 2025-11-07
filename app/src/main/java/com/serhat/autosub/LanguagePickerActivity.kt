@@ -11,6 +11,7 @@ import androidx.core.widget.addTextChangedListener
 
 class LanguagePickerActivity : AppCompatActivity() {
 
+    private  var fromAuto: Boolean = false
     private lateinit var adapter: LanguageAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +22,11 @@ class LanguagePickerActivity : AppCompatActivity() {
         val recycler = findViewById<RecyclerView>(R.id.recycler)
         val searchInput = findViewById<TextInputEditText>(R.id.searchInput)
 
+        fromAuto = intent.getBooleanExtra("from_auto",false)
+
         toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
+
+
 
         adapter = LanguageAdapter(
             currentLang = LocaleHelper.currentLangTag(this),
@@ -30,8 +35,12 @@ class LanguagePickerActivity : AppCompatActivity() {
         recycler.layoutManager = GridLayoutManager(this, 2)
         recycler.adapter = adapter
 
-
-        adapter.submitFull(Languages.all)
+        if(fromAuto){
+            adapter.submitFull(Languages.autoOnly)
+        }
+        else{
+            adapter.submitFull(Languages.all)
+        }
 
         searchInput.addTextChangedListener { text ->
             adapter.filter(text?.toString())
@@ -40,7 +49,8 @@ class LanguagePickerActivity : AppCompatActivity() {
 
     private fun onLanguageSelected(lang: Language) {
         LocaleHelper.applyLocale(this, lang.code)
-        setResult(RESULT_OK, Intent().putExtra("selected_lang_code", lang.code))
+        setResult(RESULT_OK, Intent().apply {  putExtra("selected_lang_code", lang.code)
+            putExtra("from_auto", fromAuto)})
         finish()
     }
 }
