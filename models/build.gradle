@@ -27,4 +27,15 @@ tasks.register('genUUID') {
     }
 }
 
+tasks.register('genUUIDForHi') {
+    def uuid = UUID.randomUUID().toString()
+    def odir = file("$buildDir/generated/assets/model-hi-in")
+    def ofile = file("$odir/uuid")
+    doLast {
+        mkdir odir
+        ofile.text = uuid
+    }
+}
+
 preBuild.dependsOn(genUUID)
+preBuild.dependsOn(genUUIDForHi)

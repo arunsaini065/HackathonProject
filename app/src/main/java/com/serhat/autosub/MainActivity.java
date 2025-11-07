@@ -188,6 +188,7 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
             public void onError(String errorMessage) {
                 runOnUiThread(() -> {
                     binding.selectVideoBT.setEnabled(false);
+                    Log.d("auto_sub_tag", "onError: "+errorMessage);
                     Toast.makeText(MainActivity.this, "Error initializing model: " + errorMessage, Toast.LENGTH_LONG).show();
                 });
             }
@@ -319,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
             public void onSubtitlesGenerated(List<SubtitleGenerator.SubtitleEntry> entries) {
                 Log.d(TAG, "Subtitles generated successfully. Total entries: " + entries.size());
                 runOnUiThread(() -> {
+                    binding.exportVideoBT.setVisibility(View.VISIBLE);
                     /*binding.progressBar.setVisibility(View.GONE);
                     binding.progressPercentageTV.setVisibility(View.GONE);
                     binding.cancelBT.setVisibility(View.GONE);
@@ -395,6 +397,9 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
             if(currentHighlightedPosition >= 0 && currentHighlightedPosition < subtitleEntries.size()){
                 binding.statusTV.setText(subtitleEntries.get(currentHighlightedPosition).getText());
             }
+            /*else{
+                binding.statusTV.setText("Generating...");
+            }*/
             /*subtitleAdapter.setHighlightedPosition(currentHighlightedPosition);
             if (currentHighlightedPosition != -1) {
                 binding.recyclerView.smoothScrollToPosition(currentHighlightedPosition);
