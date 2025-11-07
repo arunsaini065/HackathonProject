@@ -27,15 +27,21 @@
 
     <Button
         android:id="@+id/select_subtitle_BT"
-        android:layout_width="0dp"
+        android:layout_width="140dp"
         android:layout_height="wrap_content"
         android:text="Select Subtitle"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintStart_toEndOf="@id/select_video_BT"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="8dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/playerView" />
 
+    <Button
+        android:id="@+id/translate_subtitle_BT"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:text="Translate Subtitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/select_subtitle_BT" />
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="0dp"
