@@ -59,7 +59,7 @@ public class SubtitleGenerator {
 
     public void initModel(ModelInitCallback callback) {
         Log.d(TAG,"Called Model Init");
-        StorageService.unpack(context, "model-en-us", "model",
+        StorageService.unpack(context, "model-hi-in", "model",
                 (model) -> {
                     this.model = model;
                     Log.d(TAG, "Model initialized");
