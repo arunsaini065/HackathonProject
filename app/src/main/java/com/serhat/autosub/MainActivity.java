@@ -48,6 +48,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements ActionMode.Callback {
@@ -121,7 +122,9 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
 
                 if (result.getResultCode() == Activity.RESULT_OK) {
 
-                    Log.d("@Arun", "User opened/viewed successfully"+ result.getData().getStringExtra("srt_file"));
+                    String filename = Objects.requireNonNull(result.getData()).getStringExtra("srt_file");
+
+                    binding.toolbar.setSubtitle(filename);
 
                 } else {
 
