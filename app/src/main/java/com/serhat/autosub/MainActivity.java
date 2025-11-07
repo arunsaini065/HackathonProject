@@ -43,6 +43,9 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.serhat.autosub.databinding.ActivityMainBinding;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
     private Uri currentVideoUri;
     private ActionMode actionMode;
     private MenuItem select_video_menu;
+    private Uri currentSubtitleUri;
     private boolean preparedOnce;
 
     private enum Operation {SUBTITLE, VIDEO, NONE}
@@ -78,6 +82,20 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     generateSubtitles(uri);
                 } else {
                     Log.d("PhotoPicker", "No media selected");
+                }
+            });
+
+
+
+    ActivityResultLauncher<String[]> pickSubtitle =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    Log.d("SubtitlePicker", "Selected SRT URI: " + uri);
+                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    currentSubtitleUri = uri;
+                    loadSelectedSubtitle(uri);
+                } else {
+                    Log.d("SubtitlePicker", "No subtitle selected");
                 }
             });
 
@@ -153,6 +171,11 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         binding.selectVideoBT.setOnClickListener(v -> {
             selectVideo();
         });
+
+        binding.selectSubtitleBT.setOnClickListener(v -> {
+            pickSubtitle.launch(new String[]{"application/x-subrip", "text/plain"});
+        });
+
 
         binding.saveSubtitlesBT.setOnClickListener(v -> {
             if (subtitleEntries != null && !subtitleEntries.isEmpty()) {
@@ -498,6 +521,30 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
+    }
+
+    private void loadSelectedSubtitle(Uri subtitleUri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(subtitleUri);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder sb = new StringBuilder();
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+
+            reader.close();
+            inputStream.close();
+
+            String srtContent = sb.toString();
+            Toast.makeText(this, "SRT Loaded!", Toast.LENGTH_SHORT).show();
+            Log.d("SubtitlePicker", "SRT Content:\n" + srtContent);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Error reading subtitle: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("SubtitlePicker", "Error loading SRT", e);
+        }
     }
 
     private void exportVideoWithSubtitles() {
