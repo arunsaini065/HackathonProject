@@ -4,4 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="highlighted_subtitle">#80FFEB3B</color>
     <color name="selected_subtitle">#80ADD8E6</color>
+    <color name="outline">#DADADA</color>
+    <color name="teal_700">#018786</color>
 </resources>
