@@ -1,6 +1,7 @@
 package com.serhat.autosub;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -18,9 +19,8 @@ import android.widget.Button;
 import android.widget.Toast;
 import android.app.AlertDialog;
 import android.widget.EditText;
-import android.graphics.Typeface;
 
-import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
@@ -28,10 +28,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.view.ActionMode;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -47,12 +45,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements ActionMode.Callback {
 
@@ -93,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                     Log.d("SubtitlePicker", "Selected SRT URI: " + uri);
                     getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     currentSubtitleUri = uri;
-                    loadSelectedSubtitle(uri);
                 } else {
                     Log.d("SubtitlePicker", "No subtitle selected");
                 }
@@ -120,6 +114,46 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
                 .build());
     }
 
+    private final ActivityResultLauncher<Intent> openFileLauncher =  registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+
+                if (result.getResultCode() == Activity.RESULT_OK) {
+
+                    Log.d("@Arun", "User opened/viewed successfully"+ result.getData().getStringExtra("srt_file"));
+
+                } else {
+
+                    Log.d("@Arun", "User canceled or closed viewer");
+
+                }
+            }
+    );
+
+
+
+    private void translateSubtitle(){
+
+        String code = "en";
+        String autoSubtitleGenerator = "AutoSubtitleGenerator";
+
+        binding.translateSubtitleBT.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if (currentSubtitleUri!=null) {
+                    Intent intent = new Intent("TranslationBridgeActivity");
+                    intent.setData(currentSubtitleUri);
+                    intent.putExtra("title", autoSubtitleGenerator);
+                    intent.putExtra("lan_code", code);
+                    openFileLauncher.launch(intent);
+                }else {
+                    Toast.makeText(MainActivity.this, "No subtitle selected", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,6 +161,8 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         setContentView(binding.getRoot());
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        translateSubtitle();
 
         player = new ExoPlayer.Builder(this).build();
         PlayerView playerView = binding.playerView;
@@ -521,30 +557,6 @@ public class MainActivity extends AppCompatActivity implements ActionMode.Callba
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
-    }
-
-    private void loadSelectedSubtitle(Uri subtitleUri) {
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(subtitleUri);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-
-            reader.close();
-            inputStream.close();
-
-            String srtContent = sb.toString();
-            Toast.makeText(this, "SRT Loaded!", Toast.LENGTH_SHORT).show();
-            Log.d("SubtitlePicker", "SRT Content:\n" + srtContent);
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Error reading subtitle: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            Log.e("SubtitlePicker", "Error loading SRT", e);
-        }
     }
 
     private void exportVideoWithSubtitles() {
